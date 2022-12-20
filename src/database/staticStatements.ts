@@ -14,6 +14,7 @@ export const createStatements = {
       lagAbuse INTEGER,
       time REAL,
       date TEXT,
+      videoLink TEXT,
       PRIMARY KEY("apiId")
     )
   `,
@@ -44,8 +45,9 @@ export const staticStatements = {
         userId,
         lagAbuse,
         time,
-        date
-      ) VALUES(?,?,?,?,?,?)
+        date,
+        videoLink
+      ) VALUES(?,?,?,?,?,?,?)
     `,
     user: `
         INSERT OR REPLACE INTO users (
@@ -60,7 +62,7 @@ export const staticStatements = {
     allLevels: `SELECT * FROM levels`,
     levelCount: `SELECT Count(*) FROM levels`,
     allFastestRunsNoAbuse: `
-      SELECT levelId, userId, min(time)
+      SELECT levelId, userId, videoLink, min(time)
       FROM runs r
       WHERE
         r.apiId IN (

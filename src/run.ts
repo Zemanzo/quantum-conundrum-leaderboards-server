@@ -27,14 +27,14 @@ export async function updateAllRuns(db: Database) {
   db.beginTransaction();
 
   const promises = levels.map((level) =>
-    addLevelRunToDatabase(level.apiId, db)
+    addLevelRunsToDatabase(level.apiId, db)
   );
   await Promise.allSettled(promises);
 
   db.commitTransaction();
 }
 
-async function addLevelRunToDatabase(level: string, db: Database) {
+export async function addLevelRunsToDatabase(level: string, db: Database) {
   const { data: runs } = await connector.getLevelRuns(level);
 
   for (const run of runs) {
@@ -45,6 +45,9 @@ async function addLevelRunToDatabase(level: string, db: Database) {
       run.values.r8rg5zrn === "5q8ze9gq" ? 0 : 1, // lag abuse, "5q8ze9gq" is NO lag abuse used.
       run.times.primary_t,
       run.date || run.submitted.substring(0, run.submitted.indexOf("T")),
+      run?.videos?.links?.[0]?.uri ?? run?.videos?.text
+        ? `https://${run?.videos?.text}`
+        : "",
     ]);
   }
 }

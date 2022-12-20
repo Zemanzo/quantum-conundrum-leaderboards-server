@@ -17,8 +17,9 @@ type RunsResponse = {
     game: string;
     level: string;
     category: string;
-    videos: {
-      links: Array<{ uri: string }>;
+    videos?: {
+      text?: string;
+      links?: Array<{ uri: string }>;
     };
     status: {
       status: string;
@@ -79,15 +80,15 @@ export default class Connector {
 
   getLevelRuns(levelId: string) {
     return this.doRequest<RunsResponse>(
-      `runs?level=${levelId}&status=verified`
+      `runs?level=${levelId}&status=verified&max=200`
     );
   }
 
   getLevels() {
-    return this.doRequest<LevelsResponse>(`games/${QC_GAME_ID}/levels`);
+    return this.doRequest<LevelsResponse>(`games/${QC_GAME_ID}/levels?max=200`);
   }
 
   getUser(userId: string) {
-    return this.doRequest<UserResponse>(`users/${userId}`);
+    return this.doRequest<UserResponse>(`users/${userId}?max=200`);
   }
 }
