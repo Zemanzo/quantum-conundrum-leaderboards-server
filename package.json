@@ -1,0 +1,40 @@
+{
+  "name": "quantum-conundrum-leaderboards-server",
+  "version": "1.0.0",
+  "description": "The backend for quantum-conundrum-leaderboards",
+  "author": {
+    "name": "Merlijn van der Kamp",
+    "url": "https://merlijn.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zemanzo/quantum-conundrum-leaderboards-server.git"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "start": "yarn build && node dist/index.js",
+    "build": "tsc",
+    "lint": "eslint --ext .ts --fix src/**/*.ts test/**/*.ts"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.3",
+    "@types/fastify-cors": "^2.1.0",
+    "@types/node": "^18.7.18",
+    "@typescript-eslint/eslint-plugin": "^5.3.0",
+    "@typescript-eslint/parser": "^5.3.0",
+    "cz-conventional-changelog": "^3.0.2",
+    "eslint": "^8.2.0",
+    "source-map-support": "^0.5.12",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@fastify/cors": "^8.2.0",
+    "better-sqlite3": "^8.0.1",
+    "fastify": "^4.10.2"
+  }
+}
