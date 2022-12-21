@@ -37,19 +37,37 @@ export async function updateAllRuns(db: Database) {
 export async function addLevelRunsToDatabase(level: string, db: Database) {
   const { data: runs } = await connector.getLevelRuns(level);
 
+  const formattedRuns: ReturnType<typeof createRunObject>[] = [];
   for (const run of runs) {
-    db.preparedStatements.insert.run.run([
+    const runDetails = [
       run.id,
       run.level,
       run.players[0].id,
       run.values.r8rg5zrn === "5q8ze9gq" ? 0 : 1, // lag abuse, "5q8ze9gq" is NO lag abuse used.
       run.times.primary_t,
       run.date || run.submitted.substring(0, run.submitted.indexOf("T")),
-      run?.videos?.links?.[0]?.uri ?? run?.videos?.text
-        ? `https://${run?.videos?.text}`
-        : "",
-    ]);
+      run?.videos?.links?.[0]?.uri ??
+        (run?.videos?.text ? `https://${run.videos.text}` : ""),
+    ] as const;
+    db.preparedStatements.insert.run.run(runDetails);
+    formattedRuns.push(createRunObject(runDetails));
   }
+
+  return formattedRuns;
+}
+
+function createRunObject(
+  values: readonly [string, string, string, 0 | 1, number, string, string]
+) {
+  return {
+    apiId: values[0],
+    levelId: values[1],
+    userId: values[2],
+    lagAbuse: values[3],
+    "min(time)": values[4],
+    date: values[5],
+    videoLink: values[6],
+  };
 }
 
 /**

@@ -70,7 +70,20 @@ export const staticStatements = {
           FROM runs
           WHERE levelId = r.levelId AND lagAbuse = 0
           ORDER BY time
-          LIMIT 3
+        )
+        AND userId IS NOT NULL
+      GROUP BY levelId, userId
+      ORDER BY time
+    `,
+    levelFastestRunsNoAbuse: `
+      SELECT levelId, userId, videoLink, min(time)
+      FROM runs r
+      WHERE
+        r.apiId IN (
+          SELECT apiId
+          FROM runs
+          WHERE levelId = ? AND lagAbuse = 0
+          ORDER BY time
         )
         AND userId IS NOT NULL
       GROUP BY levelId, userId
