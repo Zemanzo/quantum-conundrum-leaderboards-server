@@ -21,9 +21,10 @@ export default class Database {
     try {
       this.sqliteDatabase = sqlite(path.resolve(__dirname, `${name}.db3`));
       this.createStatements = this.recursivePrepare(createStatements);
-      // Must create the tables before we can prepare the other statements.
       this.createTables();
       this.preparedStatements = this.recursivePrepare(staticStatements);
+      // Add triggers
+      this.addTriggers();
     } catch (error) {
       console.error(error);
       throw new Error(
@@ -51,7 +52,12 @@ export default class Database {
     for (const key in statements) {
       const entry = statements[key];
       if (typeof entry === "string") {
-        prepared[key] = this.sqliteDatabase.prepare(entry);
+        try {
+          prepared[key] = this.sqliteDatabase.prepare(entry);
+        } catch (err) {
+          console.error(err, entry);
+          throw Error(`Failed to prepare: '${key}'`);
+        }
       } else {
         prepared[key] = this.recursivePrepare(entry);
       }
@@ -59,11 +65,22 @@ export default class Database {
     return prepared;
   }
 
+  /**
+   * Must create the tables before we can prepare the other statements.
+   */
   private createTables() {
-    console.error("CREATING TABLES");
     this.createStatements.levels.run();
     this.createStatements.users.run();
     this.createStatements.runs.run();
-    console.error("DONE CREATING TABLES");
+    this.createStatements.shifts.run();
+    this.createStatements.meta.run();
+  }
+
+  /**
+   * Adds triggers so we can check if we need to re-fetch any data.
+   */
+  private addTriggers() {
+    this.preparedStatements.trigger.lastUpdateUsers.run();
+    this.preparedStatements.trigger.lastUpdateRuns.run();
   }
 }

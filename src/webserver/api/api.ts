@@ -10,8 +10,11 @@ async function routes(fastify: FastifyInstance) {
   fastify.get("/api/runs", async (req, res) => {
     const runs = fastify.db.preparedStatements.select.allFastestRunsNoAbuse
       .all()
-      .reduce(getRemoveObsoletedRunsReducer(), []);
-    res.code(200).send(runs);
+      .reduce(getRemoveObsoletedRunsReducer(3), []);
+    const shifts = fastify.db.preparedStatements.select.allBestShiftsNoAbuse
+      .all()
+      .reduce(getRemoveObsoletedRunsReducer(1), []);
+    res.code(200).send({ runs, shifts });
   });
 
   fastify.get("/api/users", async (req, res) => {
@@ -29,12 +32,16 @@ async function routes(fastify: FastifyInstance) {
     };
   }>("/api/updateLevel/:id", async (req, res) => {
     if (req.params.id) {
+      const shifts =
+        fastify.db.preparedStatements.select.levelShiftsNoAbuse.all([
+          req.params.id,
+        ]);
       if (lastUpdate[req.params.id] > Date.now() - UPDATE_COOLDOWN) {
         const runs =
           fastify.db.preparedStatements.select.levelFastestRunsNoAbuse.all([
             req.params.id,
           ]);
-        res.code(200).send(runs);
+        res.code(200).send({ runs, shifts });
       } else {
         const runs = await addLevelRunsToDatabase(req.params.id, fastify.db);
         const filteredRuns = runs
@@ -42,6 +49,7 @@ async function routes(fastify: FastifyInstance) {
           .reduce<typeof runs>((accumulator, run) => {
             if (
               run.lagAbuse === 0 &&
+              run.userId &&
               accumulator.length < 3 &&
               accumulator.findIndex(
                 (filteredRun) => filteredRun.userId === run.userId
@@ -52,7 +60,7 @@ async function routes(fastify: FastifyInstance) {
             return accumulator;
           }, []);
         lastUpdate[req.params.id] = Date.now();
-        res.code(200).send(filteredRuns);
+        res.code(200).send({ runs: filteredRuns, shifts });
       }
     } else {
       res.code(400).send({ error: "Request is malformed" });
@@ -60,10 +68,10 @@ async function routes(fastify: FastifyInstance) {
   });
 }
 
-function getRemoveObsoletedRunsReducer() {
+function getRemoveObsoletedRunsReducer(maxRuns: number) {
   const levels: Record<string, number> = {};
   return function removeObsoletedRuns(filteredRuns: any[], run: any) {
-    if ((levels?.[run.levelId] ?? 0) < 3) {
+    if ((levels?.[run.levelId] ?? 0) < maxRuns) {
       filteredRuns.push(run);
       if (levels[run.levelId]) {
         levels[run.levelId]++;

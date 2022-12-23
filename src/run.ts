@@ -1,5 +1,11 @@
 import type Database from "./database/Database";
 import Connector from "./connector/Connector";
+import shiftsJson from "./shifts.json";
+
+/**
+ * How much time in seconds
+ */
+const TIME_UNTIL_UPDATE = 1000 * 60 * 60 * 24;
 
 const connector = new Connector();
 
@@ -17,8 +23,21 @@ export async function initialize(db: Database) {
     db.commitTransaction();
   }
 
-  await updateAllRuns(db);
-  await updateAllUsers(db);
+  const currentTimeInSeconds = Date.now() / 1000;
+  const requiresUpdate = db.preparedStatements.select.allMeta
+    .all()
+    .reduce<Record<string, boolean>>((meta, entry) => {
+      meta[entry.tableId] =
+        entry.lastUpdate < currentTimeInSeconds - TIME_UNTIL_UPDATE;
+      return meta;
+    }, {});
+
+  if (requiresUpdate.runs) {
+    await updateAllRuns(db);
+  }
+  if (requiresUpdate.runs) {
+    await updateAllUsers(db);
+  }
 }
 
 export async function updateAllRuns(db: Database) {
@@ -86,6 +105,9 @@ export async function updateAllUsers(db: Database) {
   db.commitTransaction();
 }
 
+/**
+ * Gets a single user by ID and stores it in the database.
+ */
 async function addUsersToDatabase(userId: string, db: Database) {
   const { data: user } = await connector.getUser(userId);
 
@@ -94,4 +116,37 @@ async function addUsersToDatabase(userId: string, db: Database) {
     user.names.international,
     user.weblink,
   ]);
+}
+
+type User = {
+  userId: string;
+  userName: string;
+  webLink: string;
+};
+/**
+ * Should only run if you need to import JSON. Call it at the end of the
+ * initialize function to run on startup.
+ */
+//@ts-ignore
+function insertFromJSON(db: Database) {
+  const levels = db.preparedStatements.select.allLevels.all();
+  const users: User[] = db.preparedStatements.select.allUsers.all();
+
+  for (let i = 0; i < levels.length; i++) {
+    const entry = shiftsJson[i];
+    if (!entry.user) {
+      continue;
+    }
+    const { userId } = users.find((user) => user.userName === entry.user) ?? {
+      userId: entry.user,
+    };
+    db.preparedStatements.insert.shift.run([
+      levels[i].apiId,
+      userId,
+      0,
+      entry.amount,
+      Date.now(),
+      entry.shiftUrl,
+    ]);
+  }
 }
