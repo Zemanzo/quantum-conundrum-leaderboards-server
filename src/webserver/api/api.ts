@@ -1,18 +1,24 @@
 import { FastifyInstance } from "fastify";
+import bcrypt from "bcrypt";
 import { addLevelRunsToDatabase } from "../../run";
+import { getBody } from "../util";
 
 /**
  * Cooldown in milliseconds until a level can be updated.
  */
 const UPDATE_COOLDOWN = 1000 * 60;
+/**
+ * Cooldown in milliseconds until a new attempt at submitting a record can be done.
+ */
+const SUBMIT_COOLDOWN = 1000 * 60 * 15;
 
 async function routes(fastify: FastifyInstance) {
   fastify.get("/api/runs", async (req, res) => {
-    const runs = fastify.db.preparedStatements.select.allFastestRunsNoAbuse
-      .all()
+    const runs = fastify.db.preparedStatements.select.allFastestRuns
+      .all([0])
       .reduce(getRemoveObsoletedRunsReducer(3), []);
-    const shifts = fastify.db.preparedStatements.select.allBestShiftsNoAbuse
-      .all()
+    const shifts = fastify.db.preparedStatements.select.allBestShifts
+      .all([0])
       .reduce(getRemoveObsoletedRunsReducer(1), []);
     res.code(200).send({ runs, shifts });
   });
@@ -66,7 +72,72 @@ async function routes(fastify: FastifyInstance) {
       res.code(400).send({ error: "Request is malformed" });
     }
   });
+
+  let failedSubmitAttempts = 0;
+  let lastFailedDate = 0;
+  fastify.post("/api/submit", async (req, res) => {
+    if (
+      failedSubmitAttempts < 5 &&
+      lastFailedDate < Date.now() - SUBMIT_COOLDOWN
+    ) {
+      failedSubmitAttempts = 0;
+      lastFailedDate = 0;
+      const body = getBody(req, res);
+      if (
+        body.levelId &&
+        body.userId &&
+        !isNaN(body.shifts) &&
+        body.shifts >= 0 &&
+        (await isPasswordValid(body.password))
+      ) {
+        try {
+          fastify.db.preparedStatements.insert.shift.run([
+            body.levelId,
+            body.userId,
+            body.lagAbuse,
+            body.shifts,
+            Date.now(),
+            body.videoLink,
+          ]);
+          res.code(200).send({ success: true });
+        } catch (err) {
+          console.error(err);
+          res.code(500).send({ error: "Internal server error" });
+        }
+      } else {
+        res.code(400).send({ error: "Request is malformed" });
+        failedSubmitAttempts++;
+        if (failedSubmitAttempts >= 5) {
+          lastFailedDate = Date.now();
+        }
+      }
+    } else {
+      res.code(429).send({
+        error: "Too many incorrect attempts.",
+      });
+    }
+  });
 }
+
+async function isPasswordValid(password: any) {
+  return (
+    typeof password === "string" &&
+    (await hashPassword(password, "$2b$10$Y/rBUzLiwxDpxzuRj1G9BO")) ===
+      "$2b$10$Y/rBUzLiwxDpxzuRj1G9BOLlOUj7tTRYWt6QcZVFylvcdUS8f1vBC"
+  );
+}
+
+const hashPassword = (password: string, salt: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    bcrypt.hash(password, salt, (err: any, hash: string) => {
+      if (!err && hash) {
+        return resolve(hash);
+      } else {
+        return reject(err);
+      }
+    });
+  });
+};
 
 function getRemoveObsoletedRunsReducer(maxRuns: number) {
   const levels: Record<string, number> = {};

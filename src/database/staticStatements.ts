@@ -113,14 +113,14 @@ export const staticStatements = {
     allLevels: `SELECT * FROM levels`,
     levelCount: `SELECT Count(*) FROM levels`,
     // Runs
-    allFastestRunsNoAbuse: `
+    allFastestRuns: `
       SELECT levelId, userId, videoLink, min(time)
       FROM runs r
       WHERE
         r.apiId IN (
           SELECT apiId
           FROM runs
-          WHERE levelId = r.levelId AND lagAbuse = 0
+          WHERE levelId = r.levelId AND lagAbuse = ?
           ORDER BY time
         )
         AND userId IS NOT NULL
@@ -142,10 +142,10 @@ export const staticStatements = {
       ORDER BY time
     `,
     // Shifts
-    allBestShiftsNoAbuse: `
+    allBestShifts: `
       SELECT levelId, userId, videoLink, min(shifts)
       FROM shifts
-      WHERE lagAbuse = 0
+      WHERE lagAbuse = ?
         OR lagAbuse IS NULL
       GROUP BY levelId
       ORDER BY shifts

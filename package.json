@@ -21,6 +21,7 @@
     "lint": "eslint --ext .ts --fix src/**/*.ts test/**/*.ts"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/better-sqlite3": "^7.6.3",
     "@types/fastify-cors": "^2.1.0",
     "@types/node": "^18.7.18",
@@ -34,6 +35,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^8.2.0",
+    "bcrypt": "^5.1.0",
     "better-sqlite3": "^8.0.1",
     "fastify": "^4.10.2"
   }
