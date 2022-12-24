@@ -51,6 +51,25 @@ type UserResponse = {
       japanese: string | null;
     };
     weblink: string;
+    "name-style":
+      | {
+          style: "solid";
+          color: {
+            light: string;
+            dark: string;
+          };
+        }
+      | {
+          style: "gradient";
+          "color-from": {
+            light: string;
+            dark: string;
+          };
+          "color-to": {
+            light: string;
+            dark: string;
+          };
+        };
   };
 };
 

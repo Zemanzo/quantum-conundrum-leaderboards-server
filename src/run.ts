@@ -35,7 +35,7 @@ export async function initialize(db: Database) {
   if (requiresUpdate.runs) {
     await updateAllRuns(db);
   }
-  if (requiresUpdate.runs) {
+  if (requiresUpdate.users) {
     await updateAllUsers(db);
   }
 }
@@ -115,7 +115,21 @@ async function addUsersToDatabase(userId: string, db: Database) {
     user.id,
     user.names.international,
     user.weblink,
+    getUserColor(user),
   ]);
+}
+
+function getUserColor(
+  user: Awaited<ReturnType<typeof connector.getUser>>["data"]
+) {
+  switch (user?.["name-style"]?.style) {
+    case "gradient":
+      return user["name-style"]?.["color-from"]?.dark;
+    case "solid":
+      return user["name-style"]?.color.dark;
+    default:
+      return null;
+  }
 }
 
 type User = {

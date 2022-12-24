@@ -33,6 +33,7 @@ export const createStatements = {
       userId TEXT UNIQUE,
       userName TEXT,
       webLink TEXT,
+      color TEXT,
       PRIMARY KEY("userId")
     )
   `,
@@ -104,8 +105,9 @@ export const staticStatements = {
         INSERT OR REPLACE INTO users (
           userId,
           userName,
-          webLink
-        ) VALUES(?,?,?)
+          webLink,
+          color
+        ) VALUES(?,?,?,?)
       `,
   },
   select: {
