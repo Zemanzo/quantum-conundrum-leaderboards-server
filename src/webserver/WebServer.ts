@@ -40,7 +40,7 @@ class WebServer {
     /**
      * Start listening
      */
-    this.server.listen(3005, (err, address) => {
+    this.server.listen(3006, (err, address) => {
       if (err) {
         console.error(err);
         process.exit(1);
