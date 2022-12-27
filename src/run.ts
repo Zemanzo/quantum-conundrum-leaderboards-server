@@ -58,18 +58,22 @@ export async function addLevelRunsToDatabase(level: string, db: Database) {
 
   const formattedRuns: ReturnType<typeof createRunObject>[] = [];
   for (const run of runs) {
-    const runDetails = [
-      run.id,
-      run.level,
-      run.players[0].id,
-      run.values.r8rg5zrn === "5q8ze9gq" ? 0 : 1, // lag abuse, "5q8ze9gq" is NO lag abuse used.
-      run.times.primary_t,
-      run.date || run.submitted.substring(0, run.submitted.indexOf("T")),
-      run?.videos?.links?.[0]?.uri ??
-        (run?.videos?.text ? `https://${run.videos.text}` : ""),
-    ] as const;
-    db.preparedStatements.insert.run.run(runDetails);
-    formattedRuns.push(createRunObject(runDetails));
+    if (run.status.status === "verified") {
+      const runDetails = [
+        run.id,
+        run.level,
+        run.players[0].id,
+        run.values.r8rg5zrn === "5q8ze9gq" ? 0 : 1, // lag abuse, "5q8ze9gq" is NO lag abuse used.
+        run.times.primary_t,
+        run.date || run.submitted.substring(0, run.submitted.indexOf("T")),
+        run?.videos?.links?.[0]?.uri ??
+          (run?.videos?.text ? `https://${run.videos.text}` : ""),
+      ] as const;
+      db.preparedStatements.insert.run.run(runDetails);
+      formattedRuns.push(createRunObject(runDetails));
+    } else {
+      db.preparedStatements.delete.run.run([run.id]);
+    }
   }
 
   return formattedRuns;

@@ -110,6 +110,11 @@ export const staticStatements = {
         ) VALUES(?,?,?,?)
       `,
   },
+  delete: {
+    run: `
+      DELETE FROM runs WHERE apiId = ?
+    `,
+  },
   select: {
     // Levels
     allLevels: `SELECT * FROM levels`,

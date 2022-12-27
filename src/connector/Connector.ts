@@ -76,7 +76,11 @@ type UserResponse = {
 const QC_GAME_ID = "9d3eqg1l";
 
 export default class Connector {
-  private async doRequest<TResponse>(params: string): Promise<TResponse> {
+  private async doRequest<TResponse>(
+    path: string,
+    params?: ConstructorParameters<typeof URLSearchParams>[0]
+  ): Promise<TResponse> {
+    const qs = new URLSearchParams(params);
     const options = {
       headers: {
         "User-Agent": `nodejs/quantum-condundrum-leaderboards`,
@@ -84,13 +88,13 @@ export default class Connector {
     };
 
     const response = await fetch(
-      `https://www.speedrun.com/api/v1/${params}`,
+      `https://www.speedrun.com/api/v1/${path}?${qs}`,
       options
     );
 
     if (!response.ok) {
       throw new Error(
-        `HTTP error! Status: ${response.status} -- Request params: ${params}`
+        `HTTP error! Status: ${response.status} -- Request params: ${qs}`
       );
     }
 
@@ -98,13 +102,16 @@ export default class Connector {
   }
 
   getLevelRuns(levelId: string) {
-    return this.doRequest<RunsResponse>(
-      `runs?level=${levelId}&status=verified&max=200`
-    );
+    return this.doRequest<RunsResponse>("runs", {
+      level: levelId,
+      max: "200",
+    });
   }
 
   getLevels() {
-    return this.doRequest<LevelsResponse>(`games/${QC_GAME_ID}/levels?max=200`);
+    return this.doRequest<LevelsResponse>(`games/${QC_GAME_ID}/levels`, {
+      max: "200",
+    });
   }
 
   getUser(userId: string) {
