@@ -28,7 +28,7 @@ export default class Database {
     } catch (error) {
       console.error(error);
       throw new Error(
-        `Could not initialize the database. It might be unreadable or corrupted. Check the read/write permissions, or remove the database file and try again.\n${error}`
+        `Could not initialize the database. It might be unreadable or corrupted. Check the read/write permissions, or remove the database file and try again.\n${error}`,
       );
     }
   }
@@ -46,7 +46,7 @@ export default class Database {
   }
 
   private recursivePrepare<TSource extends RecursiveObject>(
-    statements: TSource
+    statements: TSource,
   ): RecursiveReplace<TSource, Statement> {
     const prepared: any = {};
     for (const key in statements) {

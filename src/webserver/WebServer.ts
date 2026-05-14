@@ -40,14 +40,19 @@ class WebServer {
     /**
      * Start listening
      */
-    this.server.listen(3006, (err, address) => {
-      if (err) {
-        console.error(err);
-        process.exit(1);
-      } else {
-        console.log(`🌐 public endpoints available at port ${address}`);
-      }
-    });
+    this.server.listen(
+      {
+        port: 3006,
+      },
+      (err, address) => {
+        if (err) {
+          console.error(err);
+          process.exit(1);
+        } else {
+          console.log(`🌐 public endpoints available at port ${address}`);
+        }
+      },
+    );
   }
 }
 

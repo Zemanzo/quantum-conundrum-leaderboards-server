@@ -10,7 +10,7 @@ const TIME_UNTIL_UPDATE = 1000 * 60 * 60 * 24;
 const connector = new Connector();
 
 export async function initialize(db: Database) {
-  const levelCount = db.preparedStatements.select.levelCount.get();
+  const levelCount = db.preparedStatements.select.levelCount.get() as any;
 
   if (levelCount?.["Count(*)"] === 0) {
     console.log("Populating database with levels");
@@ -26,7 +26,7 @@ export async function initialize(db: Database) {
   const currentTimeInSeconds = Date.now() / 1000;
   const requiresUpdate = db.preparedStatements.select.allMeta
     .all()
-    .reduce<Record<string, boolean>>((meta, entry) => {
+    .reduce<Record<string, boolean>>((meta, entry: any) => {
       meta[entry.tableId] =
         entry.lastUpdate < currentTimeInSeconds - TIME_UNTIL_UPDATE;
       return meta;
@@ -45,8 +45,8 @@ export async function updateAllRuns(db: Database) {
 
   db.beginTransaction();
 
-  const promises = levels.map((level) =>
-    addLevelRunsToDatabase(level.apiId, db)
+  const promises = levels.map((level: any) =>
+    addLevelRunsToDatabase(level.apiId, db),
   );
   await Promise.allSettled(promises);
 
@@ -80,7 +80,7 @@ export async function addLevelRunsToDatabase(level: string, db: Database) {
 }
 
 function createRunObject(
-  values: readonly [string, string, string, 0 | 1, number, string, string]
+  values: readonly [string, string, string, 0 | 1, number, string, string],
 ) {
   return {
     apiId: values[0],
@@ -101,8 +101,8 @@ export async function updateAllUsers(db: Database) {
 
   db.beginTransaction();
 
-  const promises = usersFromRuns.map((user) =>
-    addUsersToDatabase(user.userId, db)
+  const promises = usersFromRuns.map((user: any) =>
+    addUsersToDatabase(user.userId, db),
   );
   await Promise.allSettled(promises);
 
@@ -124,7 +124,7 @@ async function addUsersToDatabase(userId: string, db: Database) {
 }
 
 function getUserColor(
-  user: Awaited<ReturnType<typeof connector.getUser>>["data"]
+  user: Awaited<ReturnType<typeof connector.getUser>>["data"],
 ) {
   switch (user?.["name-style"]?.style) {
     case "gradient":
@@ -147,8 +147,8 @@ type User = {
  */
 //@ts-ignore
 function insertFromJSON(db: Database) {
-  const levels = db.preparedStatements.select.allLevels.all();
-  const users: User[] = db.preparedStatements.select.allUsers.all();
+  const levels = db.preparedStatements.select.allLevels.all() as any[];
+  const users = db.preparedStatements.select.allUsers.all() as User[];
 
   for (let i = 0; i < levels.length; i++) {
     const entry = shiftsJson[i];
