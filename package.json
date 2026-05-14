@@ -16,7 +16,7 @@
     "dist/"
   ],
   "scripts": {
-    "start": "yarn build && node dist/index.js",
+    "start": "pnpm build && node dist/index.js",
     "build": "tsc",
     "lint": "eslint --ext .ts --fix src/**/*.ts test/**/*.ts"
   },
